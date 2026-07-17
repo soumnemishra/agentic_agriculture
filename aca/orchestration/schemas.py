@@ -23,8 +23,10 @@ Design Decisions:
 """
 
 from __future__ import annotations
-
+# UUID IS USED TO GENERATE RANDOM NUMBERS 
 import uuid as _uuid
+
+# FROM DATA CLASS IMPORT THE DATA CLASS AND FIELD 
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
@@ -32,7 +34,13 @@ from typing import Any, Dict, List, Optional
 
 
 # ── Message Type Enumeration ──────────────────────────────────────────────
-
+# in python the class is genrally for the blueprint of the object 
+# MessageType(Enum): — In Python, a class is usually a blueprint for an object.
+# But by putting (Enum) in the parentheses, you are telling Python: 
+#"This isn't a normal blueprint. This is a restricted list."
+# this is used to avoid "stringly-typed dispatch" 
+# this is basically helping to prevent typos 
+# this also defines The 10 Steps of AI Thought (The Enum Values)
 class MessageType(Enum):
     """Enumeration of all ACA message categories."""
 
@@ -49,7 +57,8 @@ class MessageType(Enum):
 
 
 # ── Payload Dataclasses ──────────────────────────────────────────────────
-
+#@dataclass blocks. These are the literal 
+#"blank paper forms" for the 10 steps above
 @dataclass
 class MissionPayload:
     """
@@ -63,6 +72,9 @@ class MissionPayload:
 
     mission_id: str
     objective: str
+    #This is a safety net. If a programmer creates a MissionPayload 
+    #but forgets to fill out the constraints box, 
+    #instead of crashing, Python will just silently insert an empty dictionary {}.
     constraints: Dict[str, Any] = field(default_factory=dict)
 
 
