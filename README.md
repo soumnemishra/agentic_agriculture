@@ -143,6 +143,6 @@ All messages use the `ACAMessage` envelope:
 |:---|:---|:---|
 | **M1: Core Infrastructure** | ✅ Complete | 69/69 passing |
 | **M2: Cognitive Core** | ✅ Complete | 20/20 passing |
-| M3: World Model & Digital Twin | 🔲 Planned | — |
-| M4: Knowledge Layer & RAG | 🔲 Planned | — |
+| **M3: World Model & Digital Twin** | ✅ Complete | 100/100 passing |
+| **M4: Knowledge Layer & RAG** | ✅ Complete | 46/46 passing |
 | M5: Simulation & Evaluation | 🔲 Planned | — |

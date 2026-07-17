@@ -50,6 +50,41 @@ class SchedulerConfig:
 
 
 @dataclass(frozen=True)
+class DigitalTwinConfig:
+    """Configuration for the Digital Twin crop-simulation engine.
+
+    All rates are expressed *per simulated hour* and represent the
+    fractional change applied to the relevant property during each
+    discrete time-step.
+
+    Attributes:
+        evaporation_rate:           Fraction of ``soil_moisture`` lost
+                                    per hour due to evapotranspiration.
+        nitrogen_leaching_rate:     Fraction of ``nitrogen_level`` lost
+                                    per hour due to leaching / uptake.
+        irrigation_moisture_gain:   Absolute ``soil_moisture`` increase
+                                    per unit of irrigation ``amount``.
+        fertilizer_nitrogen_gain:   Absolute ``nitrogen_level`` increase
+                                    per unit of fertiliser ``amount``.
+        base_health_recovery:       Per-hour health-index recovery when
+                                    moisture and nitrogen are within
+                                    optimal ranges.
+        moisture_stress_penalty:    Per-hour health-index penalty when
+                                    moisture is outside optimal range.
+        nitrogen_stress_penalty:    Per-hour health-index penalty when
+                                    nitrogen is outside optimal range.
+    """
+
+    evaporation_rate: float = 0.02
+    nitrogen_leaching_rate: float = 0.01
+    irrigation_moisture_gain: float = 0.10
+    fertilizer_nitrogen_gain: float = 0.08
+    base_health_recovery: float = 0.005
+    moisture_stress_penalty: float = 0.01
+    nitrogen_stress_penalty: float = 0.008
+
+
+@dataclass(frozen=True)
 class LoggingConfig:
     """Configuration for the logging and tracing subsystem."""
 
@@ -77,6 +112,7 @@ class ACAConfig:
     memory: MemoryConfig = field(default_factory=MemoryConfig)
     scheduler: SchedulerConfig = field(default_factory=SchedulerConfig)
     logging: LoggingConfig = field(default_factory=LoggingConfig)
+    digital_twin: DigitalTwinConfig = field(default_factory=DigitalTwinConfig)
     environment: str = "development"
 
     @staticmethod
@@ -103,5 +139,6 @@ class ACAConfig:
             memory=MemoryConfig(**raw.get("memory", {})),
             scheduler=SchedulerConfig(**raw.get("scheduler", {})),
             logging=LoggingConfig(**raw.get("logging", {})),
+            digital_twin=DigitalTwinConfig(**raw.get("digital_twin", {})),
             environment=env,
         )
