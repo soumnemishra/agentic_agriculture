@@ -1,3 +1,11 @@
+
+# configuration is the blueprint for the entire ACA system 
+#  this tells  "This is how the system should behave." 
+#This separation of behavior (the simulator) 
+# and configuration (the numbers) 
+# is a core software engineering principle.
+#default states, environment variables, 
+# and limits the system expects upon boot.
 """
 ACA Configuration System
 ========================
@@ -20,8 +28,15 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, Optional
 
+# frozen true states that configuration cannot be changed once it get started
+# the scheduler controller how many tasks to be run simulataneuously
+#  so that it doesnot overhelm 
+# #the safety stamp is callled the decorator  
+# critical configurations should never change once the system is running  
 
 @dataclass(frozen=True)
+# it is telling up create a blueprint called the MessageBusConfig 
+# which is used to configure the message bus
 class MessageBusConfig:
     """Configuration for the publish-subscribe message bus."""
 
@@ -37,19 +52,22 @@ class MemoryConfig:
     working_memory_capacity: int = 500
     episodic_retention_days: int = 365
     semantic_readonly: bool = True
-    farm_memory_path: Optional[str] = None
+    farm_memory_path: Optional[str] = None # either a string or nothing 
 
 
 @dataclass(frozen=True)
 class SchedulerConfig:
     """Configuration for the task scheduler."""
-
+     # the maximum concurrent tasks that can be run at the same time
     max_concurrent_tasks: int = 8
+    # if tasks run more than 300 seconds, it will be terminated
     default_timeout_seconds: float = 300.0
+    # try edge device first before cloud 
     prefer_edge: bool = True
 
 
 @dataclass(frozen=True)
+# Digital twin config stores rules and Digital Twin use that rules 
 class DigitalTwinConfig:
     """Configuration for the Digital Twin crop-simulation engine.
 
@@ -93,7 +111,7 @@ class LoggingConfig:
     log_file: Optional[str] = None
     enable_trace_ids: bool = True
 
-
+######################## the aca config contains all the above config ######### 
 @dataclass(frozen=True)
 class ACAConfig:
     """
@@ -142,3 +160,9 @@ class ACAConfig:
             digital_twin=DigitalTwinConfig(**raw.get("digital_twin", {})),
             environment=env,
         )
+
+'''The engine doesn't change.
+
+Only the configuration changes.
+
+ACA follows exactly the same idea.'''

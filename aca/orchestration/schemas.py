@@ -22,6 +22,26 @@ Design Decisions:
     - ``MessageType`` enum prevents stringly-typed dispatch.
 """
 
+#config.py ──────────────
+#Stores constants
+#Stores settings
+#Stores thresholds
+
+#schemas.py───────────────
+#Defines the language of the architecture
+#Defines every message
+#Defines the communication protocol
+#shemas gives is the strucutre of the Data
+# the shape that every message should follow 
+# schema says what should be the structure of the data 
+'''It starts with purpose.
+
+A sensor only tells you what the world is.
+
+A mission tells you what the world should become.
+
+That single difference separates a passive monitoring system from an autonomous cognitive architecture.'''
+
 from __future__ import annotations
 # UUID IS USED TO GENERATE RANDOM NUMBERS 
 import uuid as _uuid
@@ -29,7 +49,9 @@ import uuid as _uuid
 # FROM DATA CLASS IMPORT THE DATA CLASS AND FIELD 
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+# Enum prevents that by restricting values to a fixed set.
 from enum import Enum
+
 from typing import Any, Dict, List, Optional
 
 
@@ -61,6 +83,7 @@ class MessageType(Enum):
 #"blank paper forms" for the 10 steps above
 @dataclass
 class MissionPayload:
+    # this descides one mission called mission id, objective and constraints 
     """
     Encapsulates a high-level farming mission.
 
@@ -69,17 +92,22 @@ class MissionPayload:
         objective: Natural-language description of the objective.
         constraints: Resource or temporal limits (e.g. max water litres).
     """
-
+     # mission id is used to distinguish one mission from another mission 
     mission_id: str
+    # the objective goal of the mission to be achieved 
     objective: str
     #This is a safety net. If a programmer creates a MissionPayload 
     #but forgets to fill out the constraints box, 
     #instead of crashing, Python will just silently insert an empty dictionary {}.
+    # constraints can be any so it contains a dictionary of any type of data.
     constraints: Dict[str, Any] = field(default_factory=dict)
 
-
+# goal payload exists because it preserve the intent between 
+#mission payload and the task payload 
 @dataclass
 class GoalPayload:
+    # 
+    # goal payload is a blueprint for the goal message 
     """
     A concrete, measurable goal derived from a mission.
 
@@ -94,14 +122,19 @@ class GoalPayload:
 
     goal_id: str
     parent_mission_id: str
+    # target metric says what are we  measuring 
     target_metric: str
+    # operator says how we compare the measured value to the goals 
     operator: str = "GREATER_THAN_OR_EQUAL"
     value: float = 0.0
+    # it tells about how much the confident is 
+    # different goal may have different confidence threshold 
     confidence_threshold: float = 0.80
 
 
 @dataclass
 class TaskPayload:
+    # task payload is the contract between the planning and Execution 
     """
     A schedulable unit of work assigned to an agent or skill.
 
@@ -121,7 +154,9 @@ class TaskPayload:
 
 
 @dataclass
+# observe the task and send the obseervation to the next step 
 class ObservationPayload:
+    # OBSERVATION only writes the observation doesnot conclude anything 
     """
     A timestamped sensor reading or perceptual input.
 

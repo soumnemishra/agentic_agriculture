@@ -4,3 +4,4 @@ __pycache__/
 .pytest_cache/
 paper/methodology.tex
 scratch_extract.py
+datasets/
