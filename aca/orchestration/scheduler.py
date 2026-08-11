@@ -1,5 +1,6 @@
 """
 ACA Scheduler
+this file acts as a traffic corp
 =============
 
 Assigns decomposed tasks to execution runtimes (Edge or Cloud) based
@@ -37,7 +38,8 @@ logger = get_logger("orchestration.scheduler")
 # ── Runtime Target ────────────────────────────────────────────────────
 
 class RuntimeTarget(Enum):
-    """Deployment target for task execution."""
+    """Deployment target for task execution.
+    set for the task to be executed on the edge or in the cloud."""
 
     EDGE = "EDGE"
     CLOUD = "CLOUD"

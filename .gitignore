@@ -5,3 +5,5 @@ __pycache__/
 paper/methodology.tex
 scratch_extract.py
 datasets/
+env311/
+fast/
