@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 ACA Communication Protocol — Message Schemas
 =============================================
@@ -34,15 +36,11 @@ Design Decisions:
 #shemas gives is the strucutre of the Data
 # the shape that every message should follow 
 # schema says what should be the structure of the data 
-'''It starts with purpose.
+# It starts with purpose.
+# A sensor only tells you what the world is.
+# A mission tells you what the world should become.
+# That single difference separates a passive monitoring system from an autonomous cognitive architecture.
 
-A sensor only tells you what the world is.
-
-A mission tells you what the world should become.
-
-That single difference separates a passive monitoring system from an autonomous cognitive architecture.'''
-
-from __future__ import annotations
 # UUID IS USED TO GENERATE RANDOM NUMBERS 
 import uuid as _uuid
 
