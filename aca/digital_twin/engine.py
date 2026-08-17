@@ -83,7 +83,8 @@ logger = get_logger("digital_twin.engine")
 # These define the "comfort zone" for moisture and nitrogen within which
 # the crop health index recovers rather than degrades.
 
-_MOISTURE_OPTIMAL_LOW: float = 0.30
+_MOISTURE_OPTIMAL_LOW: float = 0.30# moisture low optimal threshold
+
 _MOISTURE_OPTIMAL_HIGH: float = 0.80
 _NITROGEN_OPTIMAL_LOW: float = 0.20
 _NITROGEN_OPTIMAL_HIGH: float = 0.80

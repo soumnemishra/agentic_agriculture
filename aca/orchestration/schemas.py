@@ -22,6 +22,8 @@ Design Decisions:
     - ``MessageType`` enum prevents stringly-typed dispatch.
 """
 
+from __future__ import annotations
+
 #config.py ──────────────
 #Stores constants
 #Stores settings
@@ -42,7 +44,6 @@ A mission tells you what the world should become.
 
 That single difference separates a passive monitoring system from an autonomous cognitive architecture.'''
 
-from __future__ import annotations
 # UUID IS USED TO GENERATE RANDOM NUMBERS 
 import uuid as _uuid
 
