@@ -1,19 +1,34 @@
 """
-ACA Perception Agent
-====================
+ACA Perception Agent — Multi-Modal Perception & Ingestion
+==========================================================
 
-Ingests streaming IoT telemetry data and visual imagery, executes perception
-skills (e.g., TomatoDiagnosisSkill), and publishes unified ACAMessages with
-ObservationPayloads to the system MessageBus.
+Implements the Perception Agent responsible for ingesting synchronized
+IoT environmental telemetry and executing deep-learning vision inference
+for tomato crop health monitoring.
+
+Architectural Guarantees:
+    - Inherits from ``BaseAgent`` and conforms to ``AgentContract``.
+    - Publishes typed ``ObservationPayload`` wrapped in ``ACAMessage`` to the ``MessageBus``.
+    - Fuses real-time microclimate sensors (temperature, humidity, moisture, pH, etc.)
+      with crop disease vision diagnoses into unified observation envelopes.
 """
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
-from typing import Any, Dict, Optional
 import uuid
+from datetime import datetime, timezone
+from typing import Any, Dict, List, Optional
 
-from aca.agents.base_agent import AgentContract, BaseAgent, CognitiveLayer, MemoryAccess
+import torch
+
+from aca.agents.base_agent import (
+    AgentContract,
+    BaseAgent,
+    CognitiveLayer,
+    MemoryAccess,
+    MemoryGateway,
+    ToolGateway,
+)
 from aca.logging_config import get_logger
 from aca.orchestration.message_bus import MessageBus
 from aca.orchestration.schemas import (
@@ -30,30 +45,35 @@ logger = get_logger("agents.perception")
 
 class PerceptionAgent(BaseAgent):
     """
-    Perception Agent responsible for environmental & plant health observations.
+    Perception Agent for the Agricultural Cognitive Architecture.
 
-    Combines streaming IoT sensor readings with visual plant health diagnosis
-    and emits structured ObservationPayload messages.
+    Coordinates IoT telemetry streaming and vision-based disease classification,
+    packaging multi-modal perceptual streams into validated ``ObservationPayload``
+    messages dispatched over the ``MessageBus``.
 
     Args:
-        message_bus: System MessageBus instance.
-        memory_gateway: Gated memory proxy.
-        tool_gateway: Gated tool proxy.
-        telemetry_streamer: Injected IoTStreamer dataset simulator.
-        diagnosis_skill: Injected TomatoDiagnosisSkill vision pipeline.
+        message_bus: Central ACA pub/sub message broker.
+        memory_gateway: Permission-gated memory access proxy.
+        tool_gateway: Permission-gated tool invocation proxy.
+        iot_streamer: Synchronized IoT dataset streamer instance.
+        diagnosis_skill: Tomato diagnosis PyTorch vision skill.
+        target_zone: Default farm/greenhouse zone name.
     """
 
     def __init__(
         self,
         message_bus: MessageBus,
-        memory_gateway: Any,
-        tool_gateway: Any,
-        telemetry_streamer: IoTStreamer,
-        diagnosis_skill: TomatoDiagnosisSkill,
+        memory_gateway: MemoryGateway,
+        tool_gateway: ToolGateway,
+        iot_streamer: Optional[IoTStreamer] = None,
+        diagnosis_skill: Optional[TomatoDiagnosisSkill] = None,
+        target_zone: str = "tomato_greenhouse_zone_1",
     ) -> None:
-        self._streamer = telemetry_streamer
-        self._diagnosis_skill = diagnosis_skill
-        super().__init__(
+        self._iot_streamer = iot_streamer or IoTStreamer()
+        self._diagnosis_skill = diagnosis_skill or TomatoDiagnosisSkill()
+        self._target_zone = target_zone
+
+        super(PerceptionAgent, self).__init__(
             message_bus=message_bus,
             memory_gateway=memory_gateway,
             tool_gateway=tool_gateway,
@@ -61,112 +81,156 @@ class PerceptionAgent(BaseAgent):
 
     @property
     def contract(self) -> AgentContract:
+        """Formal contract specification for the Perception Agent."""
         return AgentContract(
             agent_name="perception_agent",
-            purpose="Ingests IoT telemetry streams and vision sensor frames to generate unified environmental observations.",
+            purpose="Ingest multi-modal IoT telemetry and execute vision-based tomato disease diagnosis",
             cognitive_layer=CognitiveLayer.PERCEPTION,
-            inputs=["iot_telemetry_stream", "camera_frame_path"],
-            outputs=["observation_payload"],
-            memory_permissions={"working": MemoryAccess.READ_WRITE},
+            inputs=["iot_telemetry", "crop_image"],
+            outputs=["fused_observation"],
+            memory_permissions={"working": MemoryAccess.WRITE},
             tools_allowed={"sensor_read", "camera_capture"},
-            latency_budget_ms=250.0,
-            messages_subscribed=[MessageType.TASK],
+            latency_budget_ms=150.0,
+            failure_modes={
+                "streamer_exhausted": "Reset streamer to beginning and log warning",
+                "vision_inference_failure": "Produce observation with sensor telemetry only and zero vision confidence",
+            },
             messages_published=[MessageType.OBSERVATION],
+            messages_subscribed=[MessageType.TASK],
             confidence_range=(0.0, 1.0),
         )
 
-    def perceive(self, image_path: str = "") -> ACAMessage:
+    def perceive(
+        self,
+        image_path: Optional[str] = None,
+        zone: Optional[str] = None,
+        publish_message: bool = True,
+    ) -> ACAMessage:
         """
-        Main execution trigger for a perception sample.
-
-        Fetches current IoT telemetry tick and runs vision diagnosis, creating
-        a unified ObservationPayload and publishing it to the MessageBus.
+        Execute one perception cycle: fetch IoT telemetry, run vision diagnosis,
+        package into ``ObservationPayload``, and optionally publish to the ``MessageBus``.
 
         Args:
-            image_path: Optional path to tomato leaf image frame.
+            image_path: Optional path to tomato leaf image frame (or synthetic tensor).
+            zone: Optional target zone override.
+            publish_message: Whether to immediately publish to the MessageBus.
 
         Returns:
-            The created ACAMessage containing the ObservationPayload.
+            The constructed ``ACAMessage`` envelope containing the ``ObservationPayload``.
         """
-        # 1. Fetch current IoT telemetry tick
-        telemetry_data = self._streamer.step()
-        if not telemetry_data:
-            logger.warning("IoTStreamer returned empty telemetry tick; using default baseline.")
-            telemetry_data = {
-                "Entry_id": 0,
-                "Timestamp": datetime.now(timezone.utc).isoformat(),
-                "Environment Temperature": 25.0,
-                "Environment Humidity": 60.0,
-                "Soil Moisture": 50.0,
-                "Soil Temperature": 20.0,
-                "Soil pH": 6.5,
-                "Solar Panel Battery Voltage": 3.6,
-                "Water TDS": 120.0,
-            }
+        target_zone = zone or self._target_zone
 
-        # 2. Run vision diagnosis skill
-        skill_res = self._diagnosis_skill.execute(image_path=image_path)
-        vision_info = skill_res.data if skill_res.success else {
-            "predicted_class": "unknown",
-            "confidence": 0.0,
-            "inference_time_ms": 0.0,
-        }
+        # 1. Fetch synchronized IoT telemetry
+        telemetry = self._iot_streamer.step()
+        if telemetry is None:
+            logger.warning("IoT streamer returned None; resetting streamer to loop")
+            self._iot_streamer.reset()
+            telemetry = self._iot_streamer.step() or {}
 
-        # 3. Assemble combined measurement dictionary
-        measurements: Dict[str, Any] = {}
-        for k, v in telemetry_data.items():
-            if isinstance(v, (int, float)):
-                measurements[k] = float(v)
+        # 2. Execute Vision Diagnosis Skill
+        vision_result: Dict[str, Any] = {}
+        vision_conf = 0.0
+        pred_class = "unknown"
+
+        if image_path is not None:
+            skill_res = self._diagnosis_skill.execute(image_path=image_path)
+            if skill_res.success and skill_res.data:
+                vision_result = skill_res.data
+                pred_class = vision_result.get("predicted_class", "unknown")
+                vision_conf = float(vision_result.get("confidence", 0.0))
             else:
-                measurements[k] = str(v)
+                logger.error("Vision diagnosis skill failed: %s", skill_res.error)
 
-        measurements["vision_predicted_class"] = vision_info.get("predicted_class", "unknown")
-        measurements["vision_confidence"] = float(vision_info.get("confidence", 0.0))
-        measurements["vision_inference_time_ms"] = float(vision_info.get("inference_time_ms", 0.0))
+        # 3. Build Sensor Source List
+        source_sensors = [
+            "environment_humidity_sensor",
+            "environment_temperature_sensor",
+            "soil_moisture_sensor",
+            "soil_ph_sensor",
+            "soil_temperature_sensor",
+            "solar_battery_sensor",
+            "water_tds_sensor",
+        ]
+        if image_path is not None:
+            source_sensors.append("rgb_crop_camera")
 
-        # 4. Construct ObservationPayload
-        obs_payload = ObservationPayload(
-            observation_id=f"obs_{uuid.uuid4().hex[:8]}",
-            source_sensors=["iot_telemetry_node", "tomato_vision_camera"],
-            target_zone="Zone_A_Tomatoes",
-            observation_time=str(telemetry_data.get("Timestamp", datetime.now(timezone.utc).isoformat())),
-            measurements={k: float(v) for k, v in measurements.items() if isinstance(v, (int, float))},
+        # 4. Construct Numeric Measurements Dictionary
+        measurements: Dict[str, float] = {
+            "environment_humidity": float(telemetry.get("environment_humidity", 0.0)),
+            "environment_light_lux": float(telemetry.get("environment_light_lux", 0.0)),
+            "environment_temperature_c": float(telemetry.get("environment_temperature_c", 0.0)),
+            "soil_moisture": float(telemetry.get("soil_moisture", 0.0)),
+            "soil_ph": float(telemetry.get("soil_ph", 7.0)),
+            "soil_temperature_c": float(telemetry.get("soil_temperature_c", 0.0)),
+            "solar_battery_voltage": float(telemetry.get("solar_battery_voltage", 0.0)),
+            "water_tds": float(telemetry.get("water_tds", 0.0)),
+        }
+        if image_path is not None:
+            measurements["vision_confidence"] = vision_conf
+
+        # 5. Build ObservationPayload
+        obs_id = f"obs_{uuid.uuid4().hex[:12]}"
+        obs_time = telemetry.get("timestamp") or datetime.now(timezone.utc).isoformat()
+
+        payload = ObservationPayload(
+            observation_id=obs_id,
+            source_sensors=source_sensors,
+            target_zone=target_zone,
+            observation_time=obs_time,
+            measurements=measurements,
         )
 
-        # Attach string metadata into metadata dict
+        # 6. Envelope Metadata
         metadata = {
-            "vision_predicted_class": vision_info.get("predicted_class", "unknown"),
-            "entry_id": telemetry_data.get("Entry_id", 0),
-            "raw_timestamp": str(telemetry_data.get("Timestamp", "")),
+            "entry_id": telemetry.get("entry_id"),
+            "predicted_class": pred_class,
+            "vision_diagnosis": vision_result,
+            "image_path": "tensor_frame" if isinstance(image_path, torch.Tensor) else (str(image_path) if image_path is not None else None),
+            "units": telemetry.get("units", {}),
         }
 
-        msg = create_message(
+        # Determine urgency priority: 4 if suspected severe pathogen, else 3
+        priority = 4 if pred_class not in ("healthy", "unknown") and vision_conf > 0.70 else 3
+        overall_conf = max(0.5, vision_conf) if image_path is not None else 0.95
+
+        message = create_message(
             source=self.contract.agent_name,
             destination="BROADCAST",
             message_type=MessageType.OBSERVATION,
-            payload=obs_payload,
-            confidence=vision_info.get("confidence", 1.0),
-            priority=3,
+            payload=payload,
+            confidence=round(overall_conf, 4),
+            priority=priority,
             metadata=metadata,
         )
 
-        # 5. Publish to MessageBus if active
-        if self.is_active:
-            self.publish(msg)
-
-        logger.info(
-            "PerceptionAgent published OBSERVATION %s (Entry_id=%s, Class=%s, Conf=%.2f)",
-            msg.uuid[:8],
-            telemetry_data.get("Entry_id"),
-            vision_info.get("predicted_class"),
-            vision_info.get("confidence", 0.0),
-        )
-
-        return msg
+        # 7. Optionally Publish to MessageBus
+        if publish_message:
+            self.publish(message)
+            logger.info(
+                "PerceptionAgent published OBSERVATION [%s] (entry=%s, class=%s, conf=%.2f%%)",
+                obs_id,
+                telemetry.get("entry_id"),
+                pred_class,
+                vision_conf * 100.0,
+            )
+        return message
 
     def process(self, message: ACAMessage) -> Optional[ACAMessage]:
-        """Handles incoming TASK messages to trigger a perception tick."""
-        if message.message_type == MessageType.TASK:
-            img_path = message.metadata.get("image_path", "")
-            return self.perceive(image_path=img_path)
-        return None
+        """
+        Process incoming trigger tasks or observation requests.
+
+        Args:
+            message: Incoming ``ACAMessage`` of type ``MessageType.TASK``.
+
+        Returns:
+            Constructed ``ACAMessage`` response (published by BaseAgent dispatch).
+        """
+        if message.message_type != MessageType.TASK:
+            return None
+
+        # Extract task parameters if provided
+        params = getattr(message.payload, "parameters", {}) if hasattr(message.payload, "parameters") else {}
+        image_path = params.get("image_path")
+        zone = params.get("target_zone") or getattr(message.payload, "target_zone", self._target_zone)
+
+        return self.perceive(image_path=image_path, zone=zone, publish_message=False)

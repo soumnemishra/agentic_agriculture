@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 ACA Communication Protocol — Message Schemas
 =============================================
@@ -22,8 +24,6 @@ Design Decisions:
     - ``MessageType`` enum prevents stringly-typed dispatch.
 """
 
-from __future__ import annotations
-
 #config.py ──────────────
 #Stores constants
 #Stores settings
@@ -36,13 +36,10 @@ from __future__ import annotations
 #shemas gives is the strucutre of the Data
 # the shape that every message should follow 
 # schema says what should be the structure of the data 
-'''It starts with purpose.
-
-A sensor only tells you what the world is.
-
-A mission tells you what the world should become.
-
-That single difference separates a passive monitoring system from an autonomous cognitive architecture.'''
+# It starts with purpose.
+# A sensor only tells you what the world is.
+# A mission tells you what the world should become.
+# That single difference separates a passive monitoring system from an autonomous cognitive architecture.
 
 # UUID IS USED TO GENERATE RANDOM NUMBERS 
 import uuid as _uuid

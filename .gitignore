@@ -1,10 +1,9 @@
 env/
+env311/
 __pycache__/
 *.pyc
 .pytest_cache/
 paper/methodology.tex
 scratch_extract.py
 datasets/
-env311/
 fast/
-model_/

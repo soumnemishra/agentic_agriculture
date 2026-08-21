@@ -1,0 +1,113 @@
+\documentclass[journal, twocolumn]{IEEEtran}
+\usepackage{amsmath,amsfonts}
+\usepackage{algorithmic}
+\usepackage{array}
+\usepackage{textcomp}
+\usepackage{stfloats}
+\usepackage{url}
+\usepackage{verbatim}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{xcolor}
+
+\begin{document}
+
+\title{Agricultural Cognitive Architecture (ACA): A Layered Cognitive Architecture for Autonomous Precision Agriculture}
+
+\author{Author 1, Author 2, Author 3}
+
+\maketitle
+
+\begin{abstract}
+Precision agriculture requires robust, scalable, and explainable decision-making. We present the Agricultural Cognitive Architecture (ACA), a layered cognitive framework designed for autonomous farming. ACA decouples cognitive reasoning from specific hardware and domain tasks, utilizing a formal message-passing protocol. Evaluated through a 100-cycle closed-loop simulation on real IoT telemetry and synthetic multi-spectral vision data, the architecture demonstrated 100\% causal chain integrity and a median cognitive cycle latency of 14.48 ms. The architecture bridges the gap between agricultural AI tools and structured, explainable action planning.
+\end{abstract}
+
+\begin{IEEEkeywords}
+Cognitive Architectures, Precision Agriculture, Sensor Fusion, Autonomous Systems
+\end{IEEEkeywords}
+
+\section{Introduction}
+% [Placeholder for Introduction. To be completed based on literature review.]
+
+\section{Methodology}
+\subsection{Research Design}
+\subsubsection{Research Problem and Gap}
+Precision agriculture demands sustained, multi-timescale reasoning: real-time sensor fusion at sub-second granularity, medium-term planning under environmental uncertainty, and long-term learning from intervention outcomes. Existing approaches fall into three categories: (a) task-specific deep learning pipelines optimizing a single objective without integration into a decision framework \cite{1}; (b) rule-based expert systems encoding agronomic knowledge as static conditionals \cite{2}; and (c) monolithic cyber-physical systems tightly coupling sensing, reasoning, and actuation \cite{3}. None provides a principled, reusable \textit{cognitive substrate} separating \textit{how} to reason from \textit{what} to reason about.
+
+\textbf{Research Question.} \textit{Can a layered cognitive architecture, modelled after established cognitive systems theory (SOAR \cite{4}, ACT-R \cite{5}), provide a principled software foundation for autonomous agricultural decision-making that is simultaneously domain-agnostic in its cognitive infrastructure and domain-specific only at its extension points?}
+
+\subsubsection{Design Objectives}
+Three objectives guide the architecture:
+\begin{itemize}
+    \item \textbf{O1 — Separation of cognitive concerns.} Perception, reasoning, planning, execution, learning, and meta-cognition must reside in independently evolvable subsystems with formally specified interfaces.
+    \item \textbf{O2 — End-to-end epistemic traceability.} Every decision must carry a complete provenance chain: Observation $\rightarrow$ Evidence $\rightarrow$ Hypothesis $\rightarrow$ Belief $\rightarrow$ Decision $\rightarrow$ Action $\rightarrow$ Feedback.
+    \item \textbf{O3 — Deployment agnosticism.} Identical cognitive pipelines must execute on edge or cloud without modification to any cognitive component.
+\end{itemize}
+
+\subsubsection{Research Methodology}
+The research follows a design-science paradigm \cite{6}, proceeding in five phases: Phase I establishes requirements. Phase II defines the 5-layer decomposition. Phase III develops message schemas and contracts. Phase IV implements the Python reference architecture. Phase V performs closed-loop evaluation.
+
+\subsection{ACA Architectural Design}
+ACA organizes agricultural decision-making into five layers with bidirectional data flow:
+1) \textit{Agricultural Environment:} Physical world (crops, soil, sensors).
+2) \textit{Perception:} Raw telemetry $\rightarrow$ validated features.
+3) \textit{Cognitive Core:} Reasoning, planning, learning, meta-cognition.
+4) \textit{Cognitive Substrates:} Memory, knowledge, world model, digital twin.
+5) \textit{Action / Execution:} Tool $\rightarrow$ Skill $\rightarrow$ Actuator hierarchy.
+
+\textbf{Communication protocol.} All communication uses the \texttt{ACAMessage} envelope:
+\begin{equation}
+M = \langle \text{uuid}, \text{ts}, \text{src}, \text{dst}, \tau, c, p, \phi, \mu \rangle
+\end{equation}
+where $\tau$ is one of 10 typed message categories (e.g., OBSERVATION, DECISION),  \in [0,1]$ is confidence, $ is priority, $\phi$ is the payload, and $\mu$ is metadata.
+
+\subsection{Experimental Setup}
+\subsubsection{Simulation Environment}
+The evaluation executes a 100-step closed-loop simulation. IoT Telemetry uses real sensor data from the ''Smart Agriculture and Plant Health Monitoring using IoT'' dataset providing 8 synchronized channels (humidity, lux, temp, soil moisture, pH, soil temp, battery, TDS). Vision Input utilizes synthetic multi-spectral tomato leaf tensor frames generated deterministically per step across five agronomic phases (healthy, Phytophthora, spider mites, foliar spotting, viral vector).
+
+\subsubsection{Cognitive Agent Pipeline}
+Four concrete agents execute the closed-loop pipeline per cycle: \texttt{PerceptionAgent}, \texttt{ReasoningAgent}, \texttt{PlanningAgent}, and \texttt{ExecutionAgent}. The \texttt{ReasoningAgent} fuses vision diagnosis with environmental telemetry using embedded agronomic etiology profiles for 11 tomato pathogen classes. The prior is the vision confidence (H) = c_{\text{vision}}$, and the likelihood is $\Lambda = 1.85$ if microclimate supports the etiology, and .55$ otherwise.
+
+\subsubsection{Metrics and Testing}
+The \texttt{CognitiveMetricsLogger} records the causal chain, latencies, and execution assessments per cycle. The architecture is validated through 263 unit tests across 8 test files.
+
+\section{Results}
+\subsection{End-to-End Pipeline Integrity}
+The 100-cycle simulation completed successfully with 100\% causal chain integrity. All 100 cycles produced a valid, UUID4-traceable four-stage provenance chain with 100\% execution success rate and 0 execution errors.
+
+\subsection{Latency Profile}
+Excluding a step 1 cold-start outlier (150.89 ms), steady-state mean cycle latency is 15.14 ms. Perception dominates steady-state cycle time at 12.84 ms mean (77.8\% of total). Reasoning, planning, and execution operate in sub-millisecond median time (0.08, 0.05, 0.11 ms respectively). P95 = 18.19 ms; P99 = 29.30 ms.
+
+\subsection{Bayesian Belief Revision}
+The sensor fusion pipeline successfully updates vision-derived priors using microclimate evidence. When conditions support the vision diagnosis ($\Lambda = 1.85$, 38 cycles), the posterior increases. When conditions contradict ($\Lambda = 0.55$, 62 cycles), the posterior decreases. 
+
+\subsection{Disease Diagnosis and Intervention Distribution}
+Pathogen diagnosis distribution across 100 cycles: Late Blight (20\%), Tomato Mosaic Virus (20\%), Healthy (60\%). Corresponding interventions matched agronomic mappings precisely (e.g., PREVENTATIVE MAINTENANCE for Healthy).
+
+\section{Discussion}
+\subsection{Architectural Contribution Assessment}
+The experimental results validate the design objectives. Separation of concerns (O1) is evidenced by the minimal dispatch overhead (2.22 ms/cycle). Epistemic traceability (O2) is confirmed by the 100\% causal chain integrity rate. Deployment agnosticism (O3) is maintained as identical pipelines ran on the scheduling engine without hardcoded hardware dependencies.
+
+\subsection{Bayesian Sensor Fusion Analysis}
+The fusion mechanism correctly updates probabilities directionally based on corroborating or contradicting evidence. However, limitations exist: the likelihood ratio is binary ($\Lambda \in \{0.55, 1.85\}$) rather than continuous, and the prior directly adopts the vision model's softmax confidence, conflating model uncertainty with epistemic prior probability.
+
+\subsection{Limitations and Threats to Validity}
+\textit{Internal Validity:} Vision frames were synthetic, and actuators were simulated. The etiology rule engine uses binary likelihoods.
+\textit{External Validity:} Evaluation occurred in a single simulated greenhouse scenario without temporal correlation across cycles or multi-agent coordination.
+\textit{Construct Validity:} The digital twin was unit-tested but not invoked during the 100-cycle experiment.
+
+\section{Conclusion}
+ACA provides a verifiable, message-driven cognitive architecture for precision agriculture. By separating cognitive processes from specific hardware implementations and maintaining strict epistemic traceability, it enables robust autonomous decision-making in agricultural environments. Future work will integrate continuous likelihood functions, full digital twin prediction during planning, and field validation on physical greenhouse infrastructure.
+
+\begin{thebibliography}{1}
+\bibitem{1} [Placeholder] Deep Learning in Agriculture Survey.
+\bibitem{2} [Placeholder] Expert Systems in Farming.
+\bibitem{3} [Placeholder] Cyber-Physical Systems for Precision Agriculture.
+\bibitem{4} J. E. Laird, \textit{The Soar Cognitive Architecture}, MIT Press, 2012.
+\bibitem{5} J. R. Anderson et al., ''An integrated theory of the mind,'' \textit{Psychol. Rev.}, vol. 111, no. 4, p. 1036, 2004.
+\bibitem{6} A. R. Hevner et al., ''Design science in information systems research,'' \textit{MIS Q.}, pp. 75-105, 2004.
+\bibitem{7} S. Franklin et al., ''LIDA: A systems-level architecture for cognition,'' \textit{BICA}, 2007.
+\end{thebibliography}
+
+\end{document}

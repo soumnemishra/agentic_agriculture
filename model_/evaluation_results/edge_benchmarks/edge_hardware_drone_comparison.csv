@@ -1,0 +1,7 @@
+Target Hardware,Processor & Architecture,Hardware Class,Power (W),FP32 Latency (ms),INT8 Latency (ms),INT8 FPS,Energy per Frame (mJ),20-Min Mission Inferences,Mission Energy (Wh),Battery Impact (% of 4S LiPo)
+Raspberry Pi Zero 2W,Quad Cortex-A53 @ 1.0 GHz,Ultra-Budget Drone Companion,1.5,37.3,5.2,192.31,7.8,1200,0.003,0.004%
+Raspberry Pi 4 Model B,Quad Cortex-A72 @ 1.5 GHz,Standard Budget Drone SBC,3.0,21.6,3.8,263.16,11.4,1200,0.004,0.005%
+Raspberry Pi 5,Quad Cortex-A76 @ 2.4 GHz,High-Performance Drone SBC,5.0,11.1,2.0,500.0,10.0,1200,0.003,0.005%
+NVIDIA Jetson Nano,128-core Maxwell GPU + 4x A57,Entry Edge GPU,5.0,1.8,1.1,909.09,5.5,1200,0.002,0.002%
+NVIDIA Jetson Orin Nano,1024-core Ampere GPU + 6x A78AE,Premium Autonomous Drone SoM,7.0,0.5,0.2,5000.0,1.4,1200,0.0,0.001%
+Rockchip RK3588,4x A76 + 4x A55 + 6 TOPS NPU,NPU-Accelerated Edge Drone,6.0,7.0,0.7,1428.57,4.2,1200,0.001,0.002%

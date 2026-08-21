@@ -1,0 +1,38 @@
+Model: d:\agentic_agriculture\model_\best_model_v7.pth
+Dataset: D:\agentic_agriculture\datasets\dataset-compiled-training\Tomato_dataset\valid
+Total Samples Evaluated: 6683
+Overall Accuracy: 92.53%
+
+Classification Report:
+                                      precision    recall  f1-score   support
+
+                      Bacterial_spot       0.93      0.91      0.92       732
+                        Early_blight       0.93      0.87      0.90       643
+                         Late_blight       0.86      0.89      0.87       792
+                           Leaf_Mold       0.93      0.94      0.93       739
+                  Septoria_leaf_spot       0.94      0.81      0.87       746
+Spider_mites Two-spotted_spider_mite       0.95      0.99      0.97       435
+                         Target_Spot       0.91      0.97      0.94       457
+       Tomato_Yellow_Leaf_Curl_Virus       0.98      0.97      0.98       498
+                 Tomato_mosaic_virus       0.97      0.96      0.97       584
+                             healthy       0.97      0.98      0.98       805
+                      powdery_mildew       0.75      0.96      0.84       252
+
+                            accuracy                           0.93      6683
+                           macro avg       0.92      0.93      0.92      6683
+                        weighted avg       0.93      0.93      0.93      6683
+
+
+Raw Confusion Matrix:
+                                      Bacterial_spot  Early_blight  Late_blight  Leaf_Mold  Septoria_leaf_spot  Spider_mites Two-spotted_spider_mite  Target_Spot  Tomato_Yellow_Leaf_Curl_Virus  Tomato_mosaic_virus  healthy  powdery_mildew
+Bacterial_spot                                   663             4           16          7                  18                                     1            5                              2                    0        3              13
+Early_blight                                       6           560           27          8                   8                                     3           22                              2                    2        4               1
+Late_blight                                       15            23          704         20                   1                                     5            2                              0                    0        4              18
+Leaf_Mold                                          6             2           21        696                   6                                     0            0                              1                    0        1               6
+Septoria_leaf_spot                                16             9           31         17                 606                                     3           10                              0                   12        3              39
+Spider_mites Two-spotted_spider_mite               0             0            0          1                   0                                   430            1                              2                    1        0               0
+Target_Spot                                        0             0            3          0                   1                                     7          444                              0                    0        2               0
+Tomato_Yellow_Leaf_Curl_Virus                      6             2            0          0                   1                                     1            0                            485                    2        1               0
+Tomato_mosaic_virus                                1             2            8          0                   2                                     1            1                              1                  562        3               3
+healthy                                            1             0            6          0                   1                                     0            2                              0                    1      792               2
+powdery_mildew                                     0             0            2          1                   4                                     0            0                              0                    0        3             242

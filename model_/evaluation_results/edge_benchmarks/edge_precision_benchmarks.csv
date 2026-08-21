@@ -1,0 +1,8 @@
+Configuration,Precision,Threads,Mean Latency (ms),Median / P50 (ms),P95 (ms),P99 (ms),Throughput (FPS),Peak Active RAM (MB),Model Size (MB),Top-1 Val Acc (%)
+PyTorch FP32 (Multi-Thread - 8T),FP32,8,12.1,11.91,13.8,14.12,82.64,0.01,5.76,95.33
+PyTorch FP32 (Edge Quad-Core - 4T),FP32,4,11.66,12.19,14.17,15.28,85.78,0.01,5.76,95.33
+PyTorch FP32 (Single-Core - 1T),FP32,1,13.32,13.12,14.67,15.19,75.09,0.01,5.76,95.33
+TorchScript JIT (4T),FP32-JIT,4,9.07,8.57,10.55,12.15,110.24,0.0,2.36,95.33
+ONNX Runtime FP32 (4T),ONNX-FP32,4,2.52,2.51,2.87,3.11,396.79,0.0,2.06,95.33
+ONNX Runtime INT8 (4T),ONNX-INT8,4,2.64,2.58,3.08,3.77,379.41,0.0,2.06,95.33
+ONNX Runtime INT8 (1T),ONNX-INT8,1,2.37,2.38,2.67,2.75,422.53,0.0,2.06,95.33

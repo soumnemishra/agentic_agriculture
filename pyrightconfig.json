@@ -1,0 +1,11 @@
+{
+  "venvPath": ".",
+  "venv": "env311",
+  "include": [
+    "."
+  ],
+  "extraPaths": [
+    ".",
+    "model_/model_architectures_files"
+  ]
+}
