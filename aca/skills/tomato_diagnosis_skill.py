@@ -24,7 +24,7 @@ from __future__ import annotations
 import os
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 import torch
 import torch.nn as nn
@@ -207,9 +207,9 @@ class CondConv2D(nn.Module):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         B, C, H, W = x.shape
         routing_weights = self.routing(x)
-        expert_weights = torch.stack([conv.weight for conv in self.convs])
+        expert_weights = torch.stack([cast(torch.Tensor, conv.weight) for conv in self.convs])
         expert_biases = (
-            torch.stack([conv.bias for conv in self.convs])
+            torch.stack([cast(torch.Tensor, conv.bias) for conv in self.convs])
             if self.convs[0].bias is not None
             else None
         )
